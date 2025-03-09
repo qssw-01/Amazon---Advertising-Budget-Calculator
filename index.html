@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>亚马逊广告成本计算器（含点击费用）</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .calculator {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        .result {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .result h3 {
+            color: #3498db;
+            margin: 0 0 15px 0;
+        }
+        #result {
+            font-size: 24px;
+            color: #2ecc71;
+            font-weight: bold;
+        }
+        #cost {
+            font-size: 24px;
+            color: #e67e22;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .hint {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .currency::before {
+            content: '$';
+            margin-right: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h1 style="text-align: center; color: #2c3e50;">亚马逊广告成本计算器</h1>
+        
+        <div class="input-group">
+            <label>目标订单数 (k)</label>
+            <input type="number" id="k" value="1" min="1" step="1">
+            <div class="hint">例如：需要出1单则填1</div>
+        </div>
+        
+        <div class="input-group">
+            <label>转化率 (%)</label>
+            <input type="number" id="p" value="10" min="1" max="100" step="0.1">
+            <div class="hint">例如：10%直接填10</div>
+        </div>
+        
+        <div class="input-group">
+            <label>置信度 (%)</label>
+            <input type="number" id="C" value="95" min="50" max="99" step="1">
+            <div class="hint">推荐值：90%~95%</div>
+        </div>
+
+        <div class="input-group">
+            <label>每次点击费用（美元）</label>
+            <input type="number" id="costPerClick" value="0.5" min="0" step="0.1">
+            <div class="hint">例如：$0.5直接填0.5</div>
+        </div>
+        
+        <div class="result">
+            <h3>计算结果</h3>
+            <div>所需点击次数：<span id="result">0</span></div>
+            <div>预估总成本：<span id="cost" class="currency">0.00</span></div>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => input.addEventListener('input', calculate));
+
+        function calculate() {
+            // 获取输入值并转换
+            const k = parseInt(document.getElementById('k').value);
+            const p = parseFloat(document.getElementById('p').value) / 100;
+            const C = parseFloat(document.getElementById('C').value) / 100;
+            const costPerClick = parseFloat(document.getElementById('costPerClick').value);
+
+            // 输入校验
+            const isValid = k >=1 && p >0 && p <=1 && C >=0.5 && C <=0.99 && costPerClick >=0;
+
+            if (isValid) {
+                let n;
+                if (k === 1) {
+                    n = Math.ceil(Math.log(1 - C) / Math.log(1 - p));
+                } else {
+                    const Z_C = 1.645; // 95%置信度对应Z值
+                    n = Math.ceil( (k + Z_C * Math.sqrt(k * (1/p - 1)) ) / p );
+                }
+                const totalCost = n * costPerClick;
+
+                // 更新结果
+                document.getElementById('result').textContent = n;
+                document.getElementById('cost').textContent = totalCost.toFixed(2);
+                document.getElementById('result').style.color = '#2ecc71';
+                document.getElementById('cost').style.color = '#e67e22';
+            } else {
+                document.getElementById('result').textContent = '输入错误';
+                document.getElementById('cost').textContent = '0.00';
+                document.getElementById('result').style.color = '#e74c3c';
+            }
+        }
+
+        calculate();
+    </script>
+</body>
+</html>
